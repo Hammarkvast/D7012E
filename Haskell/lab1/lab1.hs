@@ -1,4 +1,4 @@
-
+-- Tom Hammarkvist
 
 getSum :: [Int] -> Int
 getSum [] = 0
@@ -7,9 +7,9 @@ getSum (x:xs) = x + getSum xs
 returnSumFromTuple :: (Int, Int, Int, [Int]) -> Int
 returnSumFromTuple (theSum, i, j, lst) = theSum
 
-calcSum :: [(Int, Int, Int, [Int])] -> Int
-calcSum [(_, _, _, [])] = 0
-calcSum ((theSum,i,j,((start:end))):xs)  = start + calcSum ((theSum,i,j,((end))):xs) + calcSum xs 
+-- calcSum :: [(Int, Int, Int, [Int])] -> Int
+-- calcSum [(_, _, _, [])] = 0
+-- calcSum ((theSum,i,j,((start:end))):xs)  = start + calcSum ((theSum,i,j,((end))):xs) + calcSum xs 
 
 
 quickSort :: [(Int, Int, Int, [Int])] -> [(Int, Int, Int, [Int])]
@@ -34,16 +34,16 @@ generateString ((lstSum, i, j, lst):xs)
 
 generateKLst :: [Int] -> Int -> [(Int, Int, Int, [Int])]
 generateKLst [] _ = []
-generateKlst completeList k = let allSubLsts = getAllSublists completeList 0
+generateKlst completeList k = let allSubLsts = getAllSublists completeList 1
                                   sorted = quickSort allSubLsts
-                                in take k sorted
+                                in take (k + 1) sorted
 
 smallestKset:: [Int] -> Int -> IO()
 --smallestKset [] _ =  
-smallestKset lst k = if length lst == 15 then putStrLn "End of List!" else 
+smallestKset lst k = if length lst == 0 then putStrLn("List is empty, nothing to print!") else 
     let subLists = generateKlst lst k     
         str = generateString subLists
-        in putStrLn (str)
+        in putStrLn ("size\t" ++ "i\t" ++ "j\t" ++ "sublist\n" ++ str)
 
 
 
