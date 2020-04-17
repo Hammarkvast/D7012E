@@ -64,6 +64,10 @@ eval (Op "+" left right) env = eval left env + eval right env
 eval (Op "-" left right) env = eval left env - eval right env
 eval (Op "*" left right) env = eval left env * eval right env
 eval (Op "/" left right) env = eval left env / eval right env
+eval (App "sin" right) env = sin (eval right env)
+eval (App "cos" right) env = cos (eval right env)
+eval (App "log" right) env = log (eval right env)
+eval (App "exp" right) env = exp (eval right env)
 
 diff :: EXPR -> EXPR -> EXPR
 diff _ (Const _) = Const 0
@@ -76,6 +80,8 @@ diff v (Op "*" e1 e2) =
   Op "+" (Op "*" (diff v e1) e2) (Op "*" e1 (diff v e2))
 diff v (Op "/" e1 e2) =
   Op "/" (Op "-" (Op "*" (diff v e1) e1) (Op "*" e1 (diff v e2))) (Op "*" e2 e2)
+diff v (App "sin" e1) = Op "*" (diff v e1) (App "cos" e1)
+diff v (App "cos" e1) = Op "*" (Op "-" (Const 0) (Const 1)) (Op "*" (diff v e1) (App "sin" e1))
 diff _ _ = error "can not compute the derivative"
 
 simplify :: EXPR -> EXPR
