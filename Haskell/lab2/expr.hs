@@ -82,6 +82,8 @@ diff v (Op "/" e1 e2) =
   Op "/" (Op "-" (Op "*" (diff v e1) e1) (Op "*" e1 (diff v e2))) (Op "*" e2 e2)
 diff v (App "sin" e1) = Op "*" (diff v e1) (App "cos" e1)
 diff v (App "cos" e1) = Op "*" (Op "-" (Const 0) (Const 1)) (Op "*" (diff v e1) (App "sin" e1))
+diff v (App "exp" e1) = Op "*" (diff v e1) (App "exp" e1)
+diff v (App "log" e1) = Op "*" (diff v e1) (Op "/" (Const 1) e1)
 diff _ _ = error "can not compute the derivative"
 
 simplify :: EXPR -> EXPR
