@@ -56,6 +56,7 @@ unparse :: EXPR -> String
 unparse (Const n) = show n
 unparse (Var s) = s
 unparse (Op oper e1 e2) = "(" ++ unparse e1 ++ oper ++ unparse e2 ++ ")"
+unparse (App str arg) = str ++  "(" ++ unparse (arg) ++ ")"
 
 eval :: EXPR -> [(String,Float)] -> Float
 eval (Const n) _ = fromIntegral n
@@ -100,5 +101,14 @@ simplify (Op oper left right) =
       ("*",Const 1,e) -> e
       ("-",e,Const 0) -> e
       ("/",e,Const 1) -> e
+      ("/",le, re)     -> if left == right then Const 1 else Op "/" le re
       ("-",le,re)     -> if left==right then Const 0 else Op "-" le re
+
       (op,le,re)      -> Op op le re
+simplify (App func arg) = 
+  let (argument) = (simplify arg) in 
+    case (func, arg) of 
+      ("sin", e) -> App "sin" (simplify(e))
+      ("cos", e) -> App "cos" (simplify(e))
+      ("exp", e) -> App "exp" (simplify(e))
+      ("log", e) -> App "log" (simplify(e))
