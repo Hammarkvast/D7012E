@@ -56,7 +56,7 @@ unparse :: EXPR -> String
 unparse (Const n) = show n
 unparse (Var s) = s
 unparse (Op oper e1 e2) = "(" ++ unparse e1 ++ oper ++ unparse e2 ++ ")"
-unparse (App str arg) = str ++  "(" ++ unparse (arg) ++ ")"
+unparse (App str arg) = str ++  "(" ++ unparse arg ++ ")"
 
 eval :: EXPR -> [(String,Float)] -> Float
 eval (Const n) _ = fromIntegral n
@@ -86,6 +86,24 @@ diff v (App "cos" e1) = Op "*" (Op "-" (Const 0) (Const 1)) (Op "*" (diff v e1) 
 diff v (App "exp" e1) = Op "*" (diff v e1) (App "exp" e1)
 diff v (App "log" e1) = Op "*" (diff v e1) (Op "/" (Const 1) e1)
 diff _ _ = error "can not compute the derivative"
+
+mkfun :: (EXPR, EXPR) -> (Float -> Float)
+mkfun (body, var) =  \x -> eval body [(unparse var, x)]
+
+findzero :: String -> String -> Float -> Float
+findzero s1 s2 x0 = newtonRahpson x y x0 where
+  x = mkfun ((diff (parse s1) (parse s2)), parse s1) 
+  y = mkfun (parse s2,parse s1) 
+
+newtonRahpson :: (Float -> Float) -> (Float -> Float) -> Float -> Float
+newtonRahpson fPrime f x0 
+  | abs (x0 - x) >= 0.0001 = newtonRahpson fPrime f x
+  | otherwise = x
+  where
+    x = x0 - (f x0/ fPrime x0)
+
+
+
 
 simplify :: EXPR -> EXPR
 simplify (Const n) = Const n
