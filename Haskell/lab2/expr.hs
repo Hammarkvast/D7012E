@@ -1,5 +1,5 @@
+-- Tom Hammarkvist
 -- Code to Haskell lab assignment 2 in the course D7012E by Håkan Jonsson
-
 import Data.Char
 
 data EXPR = Const Int
