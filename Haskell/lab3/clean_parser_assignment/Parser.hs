@@ -14,34 +14,41 @@ err message cs = error (message++" near "++cs++"\n")
 iter :: Parser a -> Parser [a]  
 iter m = m # iter m >-> cons ! return [] 
 
+myIterate :: Parser a -> Int -> Parser [a]
+myIterate m 0 = return []
+myIterate m i = m # myIterate m (i-1) >-> cons
+
 cons(a, b) = a:b
 
 (-#) :: Parser a -> Parser b -> Parser b
-m -# n = error "-# not implemented"
+m -# n = (m # n) >-> snd
 
 (#-) :: Parser a -> Parser b -> Parser a
-m #- n = error "#- not implemented"
+m #- n = (m # n) >-> fst
 
 spaces :: Parser String
-spaces =  error "spaces not implemented"
+spaces =  iter space
+
+space :: Parser Char
+space = char ? isSpace
 
 token :: Parser a -> Parser a
 token m = m #- spaces
 
 letter :: Parser Char
-letter =  error "letter not implemented"
+letter =  char ? isAlpha
 
 word :: Parser String
 word = token (letter # iter letter >-> cons)
 
 chars :: Int -> Parser String
-chars n =  error "chars not implemented"
+chars n =  myIterate char n
 
 accept :: String -> Parser String
 accept w = (token (chars (length w))) ? (==w)
 
 require :: String -> Parser String
-require w  = error "require not implemented"
+require w  = accept w ! err w
 
 lit :: Char -> Parser Char
 lit c = token char ? (==c)
