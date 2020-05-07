@@ -1,3 +1,4 @@
+-- Tom Hammarkvist
 {- Test for Parser.hs -}
 module TestParser where
 

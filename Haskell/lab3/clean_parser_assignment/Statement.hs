@@ -1,3 +1,4 @@
+--Tom Hammarkvist
 module Statement(T, parse, toString, fromString, exec) where
 import Prelude hiding (return, fail)
 import Parser hiding (T)
@@ -44,15 +45,15 @@ buildRepeat (e, v) = Repeat e v
 shw :: Int -> Statement ->  String
 shw prec (Assignment s expr) = s ++ " := " ++ Expr.toString expr ++ "\n"
 shw prec (If expr s1 s2) = "if " ++ Expr.toString expr ++ " then " ++ "\n" ++ shw prec s1 ++ "else" ++ "\n" ++ shw prec s2 
-shw prec (Begin stmnts) = "Begin\n" ++   beginHelper prec stmnts ++ "end" ++ "\n"
-shw prec (While expr s) = "while " ++ Expr.toString expr ++ " do \n" ++  shw prec s ++ "\n"
-shw prec (Write expr) = "write " ++ Expr.toString expr ++ "\n"
-shw prec (Read str) = "Read " ++ str ++ "\n"   
-shw prec (Repeat s expr) = "repeat \n" ++ shw prec s ++ "until " ++ Expr.toString expr ++ "\n"
+shw prec (Begin stmnts) = "Begin\n" ++   beginHelper prec stmnts ++ "end\n" 
+shw prec (While expr s) = "while " ++ Expr.toString expr ++ " do \n" ++  shw prec s
+shw prec (Write expr) = "write " ++ Expr.toString expr ++ ";\n"
+shw prec (Read str) = "Read " ++ str ++  ";\n"  
+shw prec (Repeat s expr) = "repeat\n" ++ shw prec s ++ "until " ++ Expr.toString expr ++ ";\n"
 shw prec (Skip ) = "Skip;" ++ "\n"
 
 beginHelper:: Int -> [Statement] -> String
-beginHelper _ [] = ""
+beginHelper _ [] = []
 beginHelper prec (x:xs) = shw prec x ++  beginHelper prec xs
 
 exec :: [T] -> Dictionary.T String Integer -> [Integer] -> [Integer]
@@ -81,10 +82,16 @@ exec (Assignment str val:stmnt) dict input = exec (stmnt) (Dictionary.insert (st
     where
         x = Expr.value val dict
 
+-- exec (Repeat repeatstmnt cond:stmnt) dict input =
+--     if (Expr.value cond dict)<= 0
+--     then exec (repeatstmnt:Repeat repeatstmnt cond:stmnt) dict input
+--     else exec stmnt dict input
+
 exec (Repeat repeatstmnt cond:stmnt) dict input =
-    if (Expr.value cond dict)<= 0
-    then exec (repeatstmnt:Repeat repeatstmnt cond:stmnt) dict input
-    else exec stmnt dict input
+    exec (repeatstmnt:(
+         if (Expr.value cond dict) <=0
+         then Repeat repeatstmnt cond
+         else Skip):stmnt ) dict input
 
 exec _ dict input = []
 

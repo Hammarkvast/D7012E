@@ -1,3 +1,4 @@
+--Tom Hammarkvist
 {- Test for Program -}
 module TestProgram where
 
@@ -46,12 +47,10 @@ p2 = fromString ("\
 
 sp = putStr (toString p)
 
-sp1 = putStr (toString p1)
-
 sp2 = putStr (toString p2)
 
 rp = Program.exec p [3,16]
 
 rp1 = Program.exec p1 [1024, 2]
 
-rp2 = Program.exec p2 [4]
+rp2 = Program.exec p2 [1]

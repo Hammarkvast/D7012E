@@ -1,0 +1,2 @@
+length1([], 0).
+length1([_| Tail], N) :- length1(Tail, N1), N Is 1 + N1.
