@@ -1,16 +1,8 @@
-length1([], 0).
-length1([_| Tail], N) :- length1(Tail, N1),
-                          N is 1 + N1.
-
-
-conc([],L,L).
-conc( [X|L1], L2, [X|L3]) :- conc(L1, L2, L3).
-
-sublist( S, L) :- conc(_, L2, L), conc(S, _, L2).
-
-init1([_], []).
-init1([X|Xs], [X|Ys]) :-
-    init1(Xs, Ys).
+% A solution to the problem "Monkey and Banana"
+% From the prolog book by Ivan Bratko/in Håkan's slides
+% Adapted by Håkan so it returns the actions in a list
+% Note that there is no limit on the number of
+% recursive steps
 
 move( state( middle, onbox, middle, hasnot),
       grasp,
