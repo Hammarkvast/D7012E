@@ -1,3 +1,5 @@
+%Tom Hammarkvist
+
 move(state(robot(room1, Inventory), Steel, Brass, Package),
 'GO TO ROOM 2',
 state(robot(room2, Inventory), Steel, Brass, Package)) :-
@@ -68,7 +70,7 @@ state(robot(Pos, Lst), Steel, Brass, Pos)) :-
 
 %solveR(state(room2, _, hasPackage), N, [done | []]).
 
-solveR(state(robot(room2, _), _, _, room2), _, []).
+solveR(state(_, _, _, room2), _, []).
 
 solveR(State1, N, [MyCurrentMove | RestOfMoves]) :-
     N > 0,
