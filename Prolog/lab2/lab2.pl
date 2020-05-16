@@ -6,7 +6,10 @@ getSum([], 0).
 getSum([X | Xs], Sum) :-
    getSum(Xs, NewSum) ,
    Sum is X + NewSum.
-    
+
+returnSumFromTuple((Sum, I, J, List), S) :-
+   S = Sum.
+
 getSublist(Lst, tup(List, TheSum)) :-
    init(Lst, List),
    getSum(List, TheSum).
@@ -29,4 +32,23 @@ getAllSublists([H | T], Start, Sublists) :-
    getAllSublists(T, Next, AllSubs),
    append(Subs, AllSubs, Sublists).
 
+insert(X, [], [X]):- !.
+insert(X, [X1|L1], [X, X1|L1]):- 
+   returnSumFromTuple(X, Sum1),
+   returnSumFromTuple(X1, Sum2),
+   Sum1=<Sum2, !.
+insert(X, [X1|L1], [X1|L]):- insert(X, L1, L).
 
+insertionSort([], []):- !.
+insertionSort([X|L], S):- insertionSort(L, S1), insert(X, S1, S).
+
+take(N, _, Xs) :- N =< 0, !, N =:= 0, Xs = [].
+take(_, [], []).
+take(N, [X|Xs], [X|Ys]) :- M is N-1, take(M, Xs, Ys).
+
+generateSet([], _, []).
+generateSet(Lst, Amount, Sublists) :-
+   getAllSublists(Lst, 0, Res),
+   insertionSort(Res, SortedSubs),
+   take(Amount, SortedSubs, Sublists).
+   
