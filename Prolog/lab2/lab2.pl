@@ -7,7 +7,7 @@ getSum([X | Xs], Sum) :-
    getSum(Xs, NewSum) ,
    Sum is X + NewSum.
 
-returnSumFromTuple((Sum, I, J, List), S) :-
+returnSumFromTuple((Sum, _, _, _), S) :-
    S = Sum.
 
 getSublist(Lst, tup(List, TheSum)) :-
@@ -52,3 +52,27 @@ generateSet(Lst, Amount, Sublists) :-
    insertionSort(Res, SortedSubs),
    take(Amount, SortedSubs, Sublists).
    
+stringOutput([(Sum, I, J, Lst)| Rest]) :-
+   write(Sum),
+   write('\t'),
+   write(I),
+   write('\t'),
+   write(J),
+   write('\t'),
+   write(Lst),
+   write('\n'),
+   stringOutput(Rest).
+   %stringOutput(Rest).
+   
+smallestKset(_, 0, _) :-
+   write('That was pointless'), !.
+
+smallestKset([], _, _) :-
+   write('Inputlist is empty, try another list!'), !.
+
+smallestKset(List, Amount, Output) :-
+   generateSet(List, Amount, Output),
+   write('Sum\ti\tj\tSublist\n'),
+   stringOutput(Output).
+
+
