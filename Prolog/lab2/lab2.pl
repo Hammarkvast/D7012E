@@ -1,3 +1,5 @@
+%Tom Hammarkvist
+
 init([_], []).
 init([X|Xs], [X | Ys]) :-
    init(Xs, Ys).
@@ -9,10 +11,6 @@ getSum([X | Xs], Sum) :-
 
 returnSumFromTuple((Sum, _, _, _), S) :-
    S = Sum.
-
-getSublist(Lst, tup(List, TheSum)) :-
-   init(Lst, List),
-   getSum(List, TheSum).
 
 getSublists([], _, []).
 getSublists(Lst, Index, Tup) :-
@@ -42,13 +40,16 @@ insert(X, [X1|L1], [X1|L]):- insert(X, L1, L).
 insertionSort([], []):- !.
 insertionSort([X|L], S):- insertionSort(L, S1), insert(X, S1, S).
 
-take(N, _, Xs) :- N =< 0, !, N =:= 0, Xs = [].
+take(0, _, []). 
 take(_, [], []).
-take(N, [X|Xs], [X|Ys]) :- M is N-1, take(M, Xs, Ys).
+take(N, [X|Xs], [X|Ys]) :-
+   N > 0,
+   M is N-1, 
+   take(M, Xs, Ys).
 
 generateSet([], _, []).
 generateSet(Lst, Amount, Sublists) :-
-   getAllSublists(Lst, 0, Res),
+   getAllSublists(Lst, 1, Res),
    insertionSort(Res, SortedSubs),
    take(Amount, SortedSubs, Sublists).
    
@@ -76,3 +77,14 @@ smallestKset(List, Amount, Output) :-
    stringOutput(Output).
 
 
+% range(Int Start, Int End, [Int] Ls)
+range(X, X, []).
+range(S, E, [S|Ls]) :-
+S < E,
+NextS is S+1,
+range(NextS, E, Ls).
+
+testCase1Func(X, Y) :- Y is X*(-1)^X.
+testCase1(15, Y) :-
+range(1, 101, Ints),
+maplist(testCase1Func, Ints, Y).
