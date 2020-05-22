@@ -66,12 +66,7 @@
 %
 % given helper: Inital state of the board
 
-initBoard([ [.,.,.,.,.,.], 
-            [.,.,.,.,.,.],
-	    [.,.,1,2,.,.], 
-	    [.,.,2,1,.,.], 
-            [.,.,.,.,.,.], 
-	    [.,.,.,.,.,.] ]).
+initBoard([[.,.,.,.,.,.],[.,.,.,.,.,.],[.,.,1,2,.,.],[.,.,2,1,.,.],[.,.,.,.,.,.],[.,.,.,.,.,.]]).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -81,7 +76,8 @@ initBoard([ [.,.,.,.,.,.],
 %%%  InitialPlyr is the player who moves first. 
 
 
-
+initialize(X, 1) :-
+	initBoard(X).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -92,8 +88,28 @@ initBoard([ [.,.,.,.,.,.],
 %     - returns winning player if State is a terminal position and
 %     Plyr has a higher score than the other player 
 
+ 
 
 
+score(Board, Player, Score) :-
+	flatten(Board, ScoreList),
+	countScore(ScoreList, Player, Score).
+
+countScore([], S, 0).
+countScore([Player | RestOfBoard], Player, TotalScore) :-
+	countScore(RestOfBoard, Player, Score),
+	TotalScore is 1 + Score.
+	
+countScore([NotPlayerStone | RestOfBoard], Player, Score) :-
+	Player \= NotPlayerStone,
+	countScore(RestOfBoard, Player, Score).
+
+winner(State, Plyr) :-
+	terminal(State),
+	score(State, 1, ScoreP1),
+	score(State, 2, ScoreP2),
+	(ScoreP1 < ScoreP2, Plyr = 1;
+	ScoreP2 < ScoreP1, Plyr = 2).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -104,7 +120,11 @@ initBoard([ [.,.,.,.,.,.],
 %    - true if terminal State is a "tie" (no winner) 
 
 
-
+tie(State) :-
+	terminal(State),
+	score(State, 1, ScoreP1),
+	score(State, 2, ScoreP2),
+	ScoreP1 = ScoreP2.
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
