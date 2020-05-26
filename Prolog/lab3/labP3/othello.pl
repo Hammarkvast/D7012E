@@ -432,7 +432,24 @@ moves(Plyr, State, MvLst) :-
 %     state) and NextPlayer (i.e. the next player who will move).
 %
 
+setEnemiesWest(Plyr, State, [X, Y], NewState) :-
+	get(State, [X, Y], Enemy),
+	Enemy \= Plyr,
+	Enemy \= .,
+	set(State, PartState, [X, Y], Plyr),
+	increaseX(X, NewX),
+	setEnemiesWest(Plyr, PartState, [NewX, Y], NewState).
+setEnemiesWest(_, State, _, NewState) :-
+	NewState = State.
 
+makeMoveWest(Plyr, [X, Y], State, NewState) :-
+	set(State, PartState, [X, Y], Plyr),
+	increaseX(X, NextX),
+	setEnemiesWest(Plyr, PartState, [NextX, Y], NewState), !,
+	showState(NewState).
+
+
+%nextState(Plyr, Move, State, NewState, NextPlyr) :-
 
 
 
