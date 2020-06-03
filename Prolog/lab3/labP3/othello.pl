@@ -3,8 +3,8 @@
 %    D7012E Declarative languages
 %    Luleå University of Technology
 %
-%    Student full name: <TO BE FILLED IN BEFORE THE GRADING> 
-%    Student user id  : <TO BE FILLED IN BEFORE THE GRADING> 
+%    Student full name: Tom Hammarkvist
+%    Student user id  : tomham-3
 %
 /* ------------------------------------------------------- */
 
@@ -12,7 +12,7 @@
 
 %do not chagne the follwoing line!
 :- ensure_loaded('play.pl').
-
+:- ensure_loaded('stupid.pl').
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -60,7 +60,30 @@
 
 
 
+emptyBoardXYZ([[.,.,.,.,.,.], 
+               [.,.,.,.,.,.],  
+	       [.,.,.,.,.,.], 
+	       [.,.,.,.,.,.], 
+               [.,.,.,.,.,.], 
+	       [.,.,.,.,.,.] ]).
 
+rndBoardXYZ(NewB) :-
+  emptyBoardXYZ(B),
+  X=5, Y=5, % we fill out the board "backwards" from [5,5] to [0,0]
+  changeXYZ(B,X,Y,NewB). %, showState(NewB). 
+
+changeXYZ(B,_,Y,B) :- % done when Y<0
+  Y<0,!.
+changeXYZ(B,X,Y,NewB) :- % change row to Y-1 when X<0, and set X back to 5 again
+  X<0, Y2 is Y-1, X2 is 5,
+changeXYZ(B,X2,Y2,NewB).
+changeXYZ(B,X,Y,NewB) :- % place random content on square [X,Y], and recur
+  random_member(V,[1,2,'.']), % Equal probability
+  % random_member(V,[1,2,'.','.']), % 50% '.', 25% 1, and 25% 2
+  % random_member(V,[1,1,2,2,'.']), % 20% '.', 40% 1, and 40% 2
+  set(B,B2,[X,Y],V),
+  X2 is X-1,
+  changeXYZ(B2,X2,Y,NewB).
 
 % DO NOT CHANGE THE COMMENT BELOW.
 %
@@ -73,6 +96,27 @@ initBoard([[.,.,.,.,.,.],
 		   [.,.,.,.,.,.],
 		   [.,.,.,.,.,.]]).
 
+testBoard1([ [.,.,.,.,.,.], 
+			[.,1,.,.,.,.],
+			[.,.,2,1,.,.],
+			[.,.,1,2,.,.],
+			[.,.,.,.,1,.],
+			[.,.,.,.,.,.] ]).
+
+testBoard2([ [.,2,.,.,.,2], 
+			[.,.,1,.,1,.],
+			[.,.,.,1,.,.],
+			[.,.,1,1,1,.],
+			[.,1,.,1,.,.],
+			[.,.,.,2,.,.] ]).
+
+testBoard3([ [.,.,.,2,.,.], 
+			[.,2,.,1,1,.],
+			[2,1,1,1,.,.],
+			[2,1,1,.,1,2],
+			[.,1,.,1,.,.],
+			[2,.,.,2,2,.] ]).
+
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%% IMPLEMENT: initialize(...)%%%%%%%%%%%%%%%%%%%%%
@@ -81,9 +125,18 @@ initBoard([[.,.,.,.,.,.],
 %%%  InitialPlyr is the player who moves first. 
 
 
-initialize(X, 1) :-
-	initBoard(X).
+initialize(InitialState,1) :-
+	initBoard(InitialState).
 
+% initialize(InitialState,1) :-
+% 	testBoard1(InitialState).
+
+% initialize(InitialState,1) :-
+% 	testBoard2(InitialState).
+
+% initialize(InitialState,1) :-
+% 	testBoard3(InitialState).
+%initialize(InitialState, 1) :- rndBoardXYZ(InitialState).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -114,8 +167,8 @@ winner(State, Plyr) :-
 	terminal(State),
 	score(State, 1, ScoreP1),
 	score(State, 2, ScoreP2),
-	(ScoreP1 < ScoreP2, Plyr = 1;
-	ScoreP2 < ScoreP1, Plyr = 2).
+	((ScoreP1 < ScoreP2, Plyr = 1) ;
+	(ScoreP2 < ScoreP1, Plyr = 2)).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -141,7 +194,11 @@ tie(State) :-
 %   - true if State is a terminal   
 
 
-
+terminal(State) :-
+	moves(1, State, Plyr1Moves), !, 
+	Plyr1Moves == [n],
+	moves(2, State, Plyr2Moves), !,
+	Plyr2Moves == [n].
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -227,8 +284,11 @@ countEnemiesWest(Plyr, [X,Y], State, ValidDot):-
 	Enemy \= Plyr,
 	Enemy \= .,
 	decreaseX(X, NewX),
-	countEnemiesWest(Plyr, [NewX, Y], State, ValidDot).
-countEnemiesWest(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, Y], _),
+	countEnemiesWest(Plyr, [NewX, Y], State, ValidDot), !.
+countEnemiesWest(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesEast(Plyr, [X,Y], State, ValidDot) :-
@@ -236,8 +296,11 @@ countEnemiesEast(Plyr, [X,Y], State, ValidDot) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	increaseX(X, NewX),
-	countEnemiesEast(Plyr, [NewX, Y], State, ValidDot).
-countEnemiesEast(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, Y], _),
+	countEnemiesEast(Plyr, [NewX, Y], State, ValidDot), !.
+countEnemiesEast(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesNorth(Plyr, [X,Y], State, ValidDot):-
@@ -245,8 +308,12 @@ countEnemiesNorth(Plyr, [X,Y], State, ValidDot):-
 	Enemy \= Plyr,
 	Enemy \= .,
 	decreaseY(Y, NewY),
-	countEnemiesNorth(Plyr, [X, NewY], State, ValidDot).
-countEnemiesNorth(_, [X,Y], _, ValidDot):-
+	%writeln(NewY),
+	get(State, [X, NewY], _),
+	countEnemiesNorth(Plyr, [X, NewY], State, ValidDot), !.
+countEnemiesNorth(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesSouth(Plyr, [X, Y], State, ValidDot) :-
@@ -254,8 +321,11 @@ countEnemiesSouth(Plyr, [X, Y], State, ValidDot) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	increaseY(Y, NewY),
-	countEnemiesNorth(Plyr, [X, NewY], State, ValidDot).
-countEnemiesSouth(_, [X,Y], _, ValidDot):-
+	get(State, [X, NewY], _),
+	countEnemiesSouth(Plyr, [X, NewY], State, ValidDot), !.
+countEnemiesSouth(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesSE(Plyr, [X, Y], State, ValidDot) :-
@@ -263,17 +333,24 @@ countEnemiesSE(Plyr, [X, Y], State, ValidDot) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	increaseXY(X,Y, NewX, NewY),
-	countEnemiesSE(Plyr, [NewX, NewY], State, ValidDot).
-countEnemiesSE(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, NewY], _),
+	countEnemiesSE(Plyr, [NewX, NewY], State, ValidDot), !.
+countEnemiesSE(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesSW(Plyr, [X,Y], State, ValidDot) :-
+	%writeln([X, Y]),
 	get(State, [X,Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	decreaseXY(X,Y, NewX, NewY),
-	countEnemiesSW(Plyr, [NewX, NewY], State, ValidDot).
-countEnemiesSW(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, NewY], _),
+	countEnemiesSW(Plyr, [NewX, NewY], State, ValidDot), !.
+countEnemiesSW(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
 	ValidDot = [[X, Y]].
 
 countEnemiesNE(Plyr, [X,Y], State, ValidDot) :-
@@ -281,8 +358,12 @@ countEnemiesNE(Plyr, [X,Y], State, ValidDot) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	incXDecY(X,Y, NewX, NewY),
-	countEnemiesNE(Plyr, [NewX, NewY], State, ValidDot).
-countEnemiesNE(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, NewY], _),
+	countEnemiesNE(Plyr, [NewX, NewY], State, ValidDot), !.
+countEnemiesNE(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
+	%writeln([X, Y]),
 	ValidDot = [[X, Y]].
 
 countEnemiesNW(Plyr, [X,Y], State, ValidDot) :-
@@ -290,23 +371,26 @@ countEnemiesNW(Plyr, [X,Y], State, ValidDot) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	decXIncY(X,Y, NewX, NewY),
-	countEnemiesNW(Plyr, [NewX, NewY], State, ValidDot).
-countEnemiesNW(_, [X,Y], _, ValidDot):-
+	get(State, [NewX, NewY], _),
+	countEnemiesNW(Plyr, [NewX, NewY], State, ValidDot), !.
+countEnemiesNW(_, [X,Y], State, ValidDot):-
+	get(State, [X,Y], Dot),
+	Dot = .,
+	%writeln([X, Y]),
 	ValidDot = [[X, Y]].
 
-west(_, State, [], []) :-
-	showState(State).
+west(_, _, [], []).
 west(Plyr, State, [[X, Y]|PlayerCoordinates], DotPosition) :-
 	NextX is X-1,
 	get(State, [NextX,Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	NextNextX is NextX - 1,
-	countEnemiesWest(Plyr, [NextNextX, Y], State, PlayablePosition),
+	countEnemiesWest(Plyr, [NextNextX, Y], State, PlayablePosition), !,
 	west(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 west(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	west(Plyr, State, PlayerCoordinates, DotPosition).
+	west(Plyr, State, PlayerCoordinates, DotPosition), !.
 
 east(_,_,[],[]).
 east(Plyr, State, [[X, Y]| PlayerCoordinates], DotPosition) :-
@@ -315,113 +399,116 @@ east(Plyr, State, [[X, Y]| PlayerCoordinates], DotPosition) :-
 	Enemy \= Plyr,
 	Enemy \= .,
 	increaseX(NextX, NextNextX),
-	countEnemiesEast(Plyr, [NextNextX, Y], State, PlayablePosition),
+	countEnemiesEast(Plyr, [NextNextX, Y], State, PlayablePosition), !,
 	east(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 east(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	east(Plyr, State, PlayerCoordinates, DotPosition).
+	east(Plyr, State, PlayerCoordinates, DotPosition), !.
 
-north(_,State,[],[]) :-
-	showState(State).
+
+south(_, _, [], []) .
+south(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
+	increaseY(Y, NextY),
+	get(State, [X, NextY], Enemy),
+	Enemy \= Plyr,
+	Enemy \= .,
+	%write(Y),
+	increaseY(NextY, NextNextY),
+	countEnemiesSouth(Plyr, [X, NextNextY], State, PlayablePosition), !,
+	south(Plyr, State, PlayerCoordinates, NewDot), !,
+	append(PlayablePosition, NewDot, DotPosition).
+south(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
+	south(Plyr, State, PlayerCoordinates, DotPosition), !.
+
+
+north(_,_,[],[]) .
 north(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
 	decreaseY(Y, NextY),
 	get(State, [X, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	decreaseY(NextY, NextNextY),
-	countEnemiesNorth(Plyr, [X, NextNextY], State, PlayablePosition),
+	countEnemiesNorth(Plyr, [X, NextNextY], State, PlayablePosition), !,
 	north(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 north(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	north(Plyr, State, PlayerCoordinates, DotPosition).
+	north(Plyr, State, PlayerCoordinates, DotPosition), !.
 
-south(_, State, [], []) :-
-	showState(State).
-south(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
-	increaseY(Y, NextY),
-	get(State, [X, NextY], Enemy),
-	Enemy \= Plyr,
-	Enemy \= .,
-	increaseY(NextY, NextNextY),
-	countEnemiesSouth(Plyr, [X, NextNextY], State, PlayablePosition),
-	south(Plyr, State, PlayerCoordinates, NewDot), !,
-	append(PlayablePosition, NewDot, DotPosition).
-south(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	south(Plyr, State, PlayerCoordinates, DotPosition).
-
-southEast(_, State, [], []) :-
-	showState(State).
+southEast(_, _, [], []) .
 southEast(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
 	increaseXY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	increaseXY(NextX, NextY, NextNextX, NextNextY),
-	countEnemiesSE(Plyr, [NextNextX, NextNextY], State, PlayablePosition),
+	countEnemiesSE(Plyr, [NextNextX, NextNextY], State, PlayablePosition), !,
 	southEast(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 southEast(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	southEast(Plyr, State, PlayerCoordinates, DotPosition).
+	southEast(Plyr, State, PlayerCoordinates, DotPosition), !.
 
-southWest(_, State, [], []) :-
-	showState(State).
+southWest(_, _, [], []) .
 southWest(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
 	decreaseXY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	decreaseXY(NextX, NextY, NextNextX, NextNextY),
-	countEnemiesSW(Plyr, [NextNextX, NextNextY], State, PlayablePosition),
+	countEnemiesSW(Plyr, [NextNextX, NextNextY], State, PlayablePosition), !,
 	southWest(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 southWest(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	southWest(Plyr, State, PlayerCoordinates, DotPosition).
+	southWest(Plyr, State, PlayerCoordinates, DotPosition), !.
 
-northEast(_, State, [], []) :-
-	showState(State).
+northEast(_, _, [], []).
 northEast(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
 	incXDecY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	incXDecY(NextX, NextY, NextNextX, NextNextY),
-	countEnemiesNE(Plyr, [NextNextX, NextNextY], State, PlayablePosition),
+	countEnemiesNE(Plyr, [NextNextX, NextNextY], State, PlayablePosition), !,
 	northEast(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 northEast(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	northEast(Plyr, State, PlayerCoordinates, DotPosition).
+	northEast(Plyr, State, PlayerCoordinates, DotPosition), !.
 
-northWest(_, State, [], []) :-
-	showState(State).
+northWest(_, _, [], []) .
 northWest(Plyr, State, [[X,Y] | PlayerCoordinates], DotPosition) :-
 	decXIncY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
 	decXIncY(NextX, NextY, NextNextX, NextNextY),
-	countEnemiesNW(Plyr, [NextNextX, NextNextY], State, PlayablePosition),
+	countEnemiesNW(Plyr, [NextNextX, NextNextY], State, PlayablePosition), !,
 	northWest(Plyr, State, PlayerCoordinates, NewDot), !,
 	append(PlayablePosition, NewDot, DotPosition).
 northWest(Plyr, State, [_|PlayerCoordinates], DotPosition) :-
-	northWest(Plyr, State, PlayerCoordinates, DotPosition).	
+	northWest(Plyr, State, PlayerCoordinates, DotPosition), !.	
 
-moves(Plyr, State, MvLst) :-
-	getAllPlayerPositions(Plyr, State, 0, PlyrPositions),
-	west(Plyr, State, PlyrPositions, ValidWest) ,
-	east(Plyr, State, PlyrPositions, ValidEast) ,
-	south(Plyr, State, PlyrPositions, ValidSouth) ,
-	north(Plyr, State, PlyrPositions, ValidNorth) ,
-	southEast(Plyr, State, PlyrPositions, ValidSE) ,
-	southWest(Plyr,State, PlyrPositions, ValidSW) ,
-	northEast(Plyr, State, PlyrPositions, ValidNE) ,
-	northWest(Plyr, State, PlyrPositions, ValidNW) ,
+moves(Plyr, State,[n]) :-
+ 	moves2(Plyr, State, []).
+moves(Plyr, State, MvList) :-
+	moves2(Plyr, State, MvList), !.
+moves2(Plyr, State, MvLst) :-
+	(getAllPlayerPositions(Plyr, State, 0, PlyrPositions),
+	west(Plyr, State, PlyrPositions, ValidWest) , 
+	east(Plyr, State, PlyrPositions, ValidEast) , 
+	south(Plyr, State, PlyrPositions, ValidSouth) , 
+	north(Plyr, State, PlyrPositions, ValidNorth) , 
+	southEast(Plyr, State, PlyrPositions, ValidSE) , 
+	southWest(Plyr,State, PlyrPositions, ValidSW) , 
+	northEast(Plyr, State, PlyrPositions, ValidNE) , 
+	northWest(Plyr, State, PlyrPositions, ValidNW)) , 
 	append(ValidWest, ValidEast, ValidWestEast),
 	append(ValidWestEast, ValidSouth, ValidWES),
 	append(ValidWES, ValidNorth, ValidWESN),
 	append(ValidWESN, ValidSE, ValidWESNSE),
 	append(ValidWESNSE, ValidSW, ValidWESNSESW),
 	append(ValidWESNSESW, ValidNE, ValidWESNSESWNE),
-	append(ValidWESNSESWNE, ValidNW, MvLst).
+	append(ValidWESNSESWNE, ValidNW, ListOfMoves),
+	sort(ListOfMoves, MvLst), !.
+	
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -436,40 +523,48 @@ setEnemiesEast(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	increaseX(X, NewX),
-	setEnemiesEast(Plyr, PartState, [NewX, Y], NewState).
-setEnemiesEast(_, State, _, NewState) :-
+	setEnemiesEast(Plyr, State, [NewX, Y], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesEast(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesWest(Plyr, State, [X,Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	decreaseX(X, NewX),
-	setEnemiesWest(Plyr, PartState, [NewX, Y], NewState).
-setEnemiesWest(_, State, _, NewState) :-
+	setEnemiesWest(Plyr, State, [NewX, Y], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesWest(Plyr, State, [X, Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesNorth(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	decreaseY(Y, NewY),
-	setEnemiesNorth(Plyr, PartState, [X, NewY], NewState).
-setEnemiesNorth(_, State, _, NewState) :-
+	setEnemiesNorth(Plyr, State, [X, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesNorth(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.	
 
 setEnemiesSouth(Plyr, State, [X, Y], NewState) :-
  	get(State, [X, Y], Enemy),
  	Enemy \= Plyr,
- 	Enemy \= .,
- 	set(State, PartState, [X, Y], Plyr),
+ 	Enemy \= '.',
  	increaseY(Y, NewY),
- 	setEnemiesSouth(Plyr, PartState, [X, NewY], NewState).
-setEnemiesSouth(_, State, _, NewState) :-
+	setEnemiesSouth(Plyr, State, [X, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesSouth(Plyr, State, [X, Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesSE(Plyr, State, [X, Y], NewState) :-
@@ -477,77 +572,81 @@ setEnemiesSE(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	increaseXY(X, Y, NewX, NewY),
-	setEnemiesSE(Plyr, PartState, [NewX, NewY], NewState).
-setEnemiesSE(_, State, _, NewState) :-
+	setEnemiesSE(Plyr, State, [NewX, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesSE(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesSW(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	decXIncY(X, Y, NewX, NewY),
-	setEnemiesSE(Plyr, PartState, [NewX, NewY], NewState).
-setEnemiesSW(_, State, _, NewState) :-
+	setEnemiesSW(Plyr, State, [NewX, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesSW(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesNE(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	incXDecY(X, Y, NewX, NewY),
-	setEnemiesNE(Plyr, PartState, [NewX, NewY], NewState).
-setEnemiesNE(_, State, _, NewState) :-
+	setEnemiesNE(Plyr, State, [NewX, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesNE(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
 	NewState = State.
 
 setEnemiesNW(Plyr, State, [X, Y], NewState) :-
 	get(State, [X, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
 	decreaseXY(X, Y, NewX, NewY),
-	setEnemiesNW(Plyr, PartState, [NewX, NewY], NewState).
-setEnemiesNW(_, State, _, NewState) :-
-	NewState = State.
+	setEnemiesNW(Plyr, State, [NewX, NewY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+setEnemiesNW(Plyr, State, [X,Y], NewState) :-
+	get(State, [X, Y], Player),
+	Player = Plyr,
+	NewState = State, !.
 
 makeMoveEast(Plyr, [X, Y], State, NewState) :-
 	increaseX(X, NextX),
 	get(State, [NextX, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesEast(Plyr, PartState, [NextX, Y], NewState), !,
-	showState(NewState).
+	setEnemiesEast(Plyr, State, [NextX, Y], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveWest(Plyr, [X, Y], State, NewState) :-
 	decreaseX(X, NextX),
 	get(State, [NextX, Y], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesWest(Plyr, PartState, [NextX, Y], NewState), !,
-	showState(NewState).
+	setEnemiesWest(Plyr, State, [NextX, Y], PartState),
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveNorth(Plyr, [X, Y], State, NewState) :-
 	decreaseY(Y, NextY),
 	get(State, [X, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesNorth(Plyr, PartState, [X, NextY], NewState), !,
-	showState(NewState).
+	setEnemiesNorth(Plyr, State, [X, NextY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveSouth(Plyr, [X, Y], State, NewState) :-
 	increaseY(Y, NextY),
  	get(State, [X, NextY], Enemy),
  	Enemy \= Plyr,
  	Enemy \= .,
- 	set(State, PartState, [X, Y], Plyr),
- 	setEnemiesSouth(Plyr, PartState, [X, NextY], NewState), !,
- 	showState(NewState).
+	 setEnemiesSouth(Plyr, State, [X, NextY], PartState), !,
+	 set(PartState, NewState, [X, Y], Plyr).
 
 
 makeMoveSE(Plyr, [X, Y], State, NewState) :-
@@ -555,47 +654,51 @@ makeMoveSE(Plyr, [X, Y], State, NewState) :-
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesSE(Plyr, PartState, [NextX, NextY], NewState), !,
-	showState(NewState).
+	setEnemiesSE(Plyr, State, [NextX, NextY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveSW(Plyr, [X, Y], State, NewState) :-
 	decXIncY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesSW(Plyr, PartState, [NextX, NextY], NewState), !,
-	showState(NewState).
+	setEnemiesSW(Plyr, State, [NextX, NextY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveNE(Plyr, [X, Y], State, NewState) :-
 	incXDecY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesNE(Plyr, PartState, [NextX, NextY], NewState), !,
-	showState(NewState).
+	setEnemiesNE(Plyr, State, [NextX, NextY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
 
 makeMoveNW(Plyr, [X, Y], State, NewState) :-
 	decreaseXY(X, Y, NextX, NextY),
 	get(State, [NextX, NextY], Enemy),
 	Enemy \= Plyr,
 	Enemy \= .,
-	set(State, PartState, [X, Y], Plyr),
-	setEnemiesNW(Plyr, PartState, [NextX, NextY], NewState), !,
-	showState(NewState).
+	setEnemiesNW(Plyr, State, [NextX, NextY], PartState), !,
+	set(PartState, NewState, [X, Y], Plyr).
+
+
 
 nextState(Plyr, Move, State, NewState, NextPlyr) :-
-	(makeMoveEast(Plyr, Move, State, NewState) ;
-	makeMoveWest(Plyr, Move, State, NewState);
-	makeMoveNorth(Plyr, Move, State, NewState);
-	makeMoveSouth(Plyr, Move, State, NewState);
-	makeMoveSE(Plyr, Move, State, NewState);
-	makeMoveSW(Plyr, Move, State, NewState); 
-	makeMoveNE(Plyr, Move, State, NewState);
-	makeMoveNW(Plyr, Move, State, NewState)),
-	(Plyr = 1, NextPlyr = 2) ; (Plyr = 2, NextPlyr = 1).
+	((Plyr = 2 , NextPlyr = 1) ; (Plyr = 1, NextPlyr = 2)),
+    Move = n,
+    NewState = State.
+nextState(Plyr, Move, State, NewState, NextPlyr) :-
+	 validmove(Plyr, State, Move), !,
+	((Plyr = 2 , NextPlyr = 1) ; (Plyr = 1, NextPlyr = 2)),
+	 ((makeMoveEast(Plyr, Move, State, NewState), !);
+	 (makeMoveWest(Plyr, Move, State, NewState), !);
+	 (makeMoveNorth(Plyr, Move, State, NewState), !);
+	 (makeMoveSouth(Plyr, Move, State, NewState), !);
+	 (makeMoveSE(Plyr, Move, State, NewState), !);
+	 (makeMoveSW(Plyr, Move, State, NewState), !); 
+	 (makeMoveNE(Plyr, Move, State, NewState), !);
+	 (makeMoveNW(Plyr, Move, State, NewState))),!.
+
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -605,8 +708,10 @@ nextState(Plyr, Move, State, NewState, NextPlyr) :-
 %% define validmove(Plyr,State,Proposed). 
 %   - true if Proposed move by Plyr is valid at State.
 
-
-
+validmove(Plyr, State, Proposed) :-
+	moves(Plyr, State, MoveList), 
+	member(Proposed, MoveList). 
+	
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -621,9 +726,18 @@ nextState(Plyr, Move, State, NewState, NextPlyr) :-
 %          the value of state (see handout on ideas about
 %          good heuristics.
 
+ h(State, -40) :-
+ 	winner(State, 1), !.
+ h(State, 40) :-
+ 	winner(State, 2), !.
+ h(State, 0) :-
+ 	tie(State), !.
+ h(State, Val) :-
+ 	score(State, 1, Player1Score), 
+ 	score(State, 2, Player2Score), 
+ 	Val is Player2Score - Player1Score.
 
-
-
+%h(_, 0).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -634,7 +748,7 @@ nextState(Plyr, Move, State, NewState, NextPlyr) :-
 %     of all states.
 
 
-
+lowerBound(-100).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -646,7 +760,7 @@ nextState(Plyr, Move, State, NewState, NextPlyr) :-
 %     of all states.
 
 
-
+upperBound(100).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -747,4 +861,6 @@ setInList( [Element|RestList], [Element|NewRestList], Index, Value) :-
 	Index > 0, 
 	Index1 is Index-1, 
 	setInList( RestList, NewRestList, Index1, Value). 
+ 
+
  
