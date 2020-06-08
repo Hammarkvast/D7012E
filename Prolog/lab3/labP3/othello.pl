@@ -12,6 +12,7 @@
 
 %do not chagne the follwoing line!
 :- ensure_loaded('play.pl').
+:- ensure_loaded('testboards.pl').
 :- ensure_loaded('stupid.pl').
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -117,6 +118,12 @@ testBoard3([ [.,.,.,2,.,.],
 			[.,1,.,1,.,.],
 			[2,.,.,2,2,.] ]).
 
+flipAll8Dirs1([[1,2,1,2,1,2],
+			[2,2,2,2,2,2],
+			[1,2,.,2,2,1],
+			[2,2,2,2,2,2],
+			[1,2,2,2,2,2],
+			[2,2,1,2,2,1]]).
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%% IMPLEMENT: initialize(...)%%%%%%%%%%%%%%%%%%%%%
@@ -125,19 +132,22 @@ testBoard3([ [.,.,.,2,.,.],
 %%%  InitialPlyr is the player who moves first. 
 
 
-initialize(InitialState,1) :-
-	initBoard(InitialState).
+% initialize(InitialState,1) :-
+% 	initBoard(InitialState).
+
+
 
 % initialize(InitialState,1) :-
-% 	testBoard1(InitialState).
+%  	testBoard1(InitialState).
 
 % initialize(InitialState,1) :-
-% 	testBoard2(InitialState).
+%   	testBoard2(InitialState).
 
 % initialize(InitialState,1) :-
-% 	testBoard3(InitialState).
-%initialize(InitialState, 1) :- rndBoardXYZ(InitialState).
+%  	testBoard3(InitialState).
+initialize(InitialState, 1) :- rndBoardXYZ(InitialState).
 
+% initialize(InitialState,1) :- flipAll8Dirs1(InitialState).
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%winner(...)%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -147,7 +157,7 @@ initialize(InitialState,1) :-
 %     Plyr has a higher score than the other player 
 
  
-
+%
 
 score(Board, Player, Score) :-
 	flatten(Board, ScoreList),
@@ -688,19 +698,34 @@ nextState(Plyr, Move, State, NewState, NextPlyr) :-
     Move = n,
     NewState = State.
 nextState(Plyr, Move, State, NewState, NextPlyr) :-
-	 validmove(Plyr, State, Move), !,
-	((Plyr = 2 , NextPlyr = 1) ; (Plyr = 1, NextPlyr = 2)),
-	 ((makeMoveEast(Plyr, Move, State, NewState), !);
-	 (makeMoveWest(Plyr, Move, State, NewState), !);
-	 (makeMoveNorth(Plyr, Move, State, NewState), !);
-	 (makeMoveSouth(Plyr, Move, State, NewState), !);
-	 (makeMoveSE(Plyr, Move, State, NewState), !);
-	 (makeMoveSW(Plyr, Move, State, NewState), !); 
-	 (makeMoveNE(Plyr, Move, State, NewState), !);
-	 (makeMoveNW(Plyr, Move, State, NewState))),!.
-
-
-
+	validmove(Plyr, State, Move),
+	getState(Plyr, Move, State, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-	 
+	 makeMoveEast(Plyr, Move, State, NewState1),
+	 getState(Plyr, Move, NewState1, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :- 
+	makeMoveWest(Plyr, Move, State, NewState2),
+	getState(Plyr, Move, NewState2, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveNorth(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveSouth(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveSE(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveSW(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveNE(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, Move, State, NewState, NextPlyr) :-
+	makeMoveNW(Plyr, Move, State, NewState3),
+	getState(Plyr, Move, NewState3, NewState, NextPlyr).
+getState(Plyr, _, State, State, NextPlyr) :-
+	((Plyr = 2 , NextPlyr = 1) ; (Plyr = 1, NextPlyr = 2)).
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%validmove(Plyr,State,Proposed)%%%%%%%%%%%%%%%%%%%%
